@@ -1,4 +1,6 @@
+import { isValidObjectId } from "mongoose";
 import * as yup from "yup";
+import { TokenAndIDValidation } from "./validationSchema";
 
 export const CreateUserSchema = yup.object().shape({
   name: yup
@@ -20,4 +22,16 @@ export const CreateUserSchema = yup.object().shape({
       /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&^])[A-Za-z\d@$!%*#?&^]{8,}$/,
       "Password too simple!"
     ),
+});
+
+export const TokenAndIDValidation = yup.object().shape({
+  token: yup.string().trim().required("Invalid token!"),
+  userId: yup
+    .string()
+    .transform(function (value) {
+      if (this.isType(value) && isValidObjectId(value)) return value;
+
+      return "";
+    })
+    .required("Invalid userId!"),
 });

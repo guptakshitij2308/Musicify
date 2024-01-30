@@ -1,14 +1,12 @@
 import nodemailer from "nodemailer";
 import { MAILTRAP_PASS, MAILTRAP_USER, VERIFICATION_EMAIL } from "./variables";
 
-import EmailVerificationToken from "#/models/emailVerificationToken";
-
 import { generateTemplate } from "#/mail/template";
 import path from "path";
 
 const generateMailTransporter = () => {
   const transporter = nodemailer.createTransport({
-    host: "sandbox.smtp.mailtrap.io",
+    service: "Gmail",
     port: 2525,
     auth: {
       user: MAILTRAP_USER,
@@ -29,11 +27,6 @@ export const sendMail = async (token: string, profile: Profile) => {
   const transport = generateMailTransporter();
 
   const { name, email, userId } = profile;
-
-  await EmailVerificationToken.create({
-    owner: userId,
-    token,
-  });
 
   const welcomeMessage = `Hi ${name}, welcome to Musicify! Use the given otp to verify your account.`;
 
@@ -59,6 +52,45 @@ export const sendMail = async (token: string, profile: Profile) => {
         filename: "welcom.png",
         path: path.join(__dirname, "../mail/welcome.png"),
         cid: "welcome",
+      },
+    ],
+  });
+};
+
+interface Options {
+  email: string;
+  link: string;
+}
+
+export const sendForgetPasswordLink = async (options: Options) => {
+  const transport = generateMailTransporter();
+
+  const { email, link } = options;
+
+  const message = `We just received a request that you forgot you password. Please use this link to create a new password for your account.`;
+
+  transport.sendMail({
+    to: email,
+    subject: "Password Reset Link",
+    from: VERIFICATION_EMAIL,
+    html: generateTemplate({
+      title: "Password Reset from Musicify",
+      message,
+      logo: "cid:logo",
+      banner: "cid:forget_password",
+      link,
+      btnTitle: "Reset Password",
+    }),
+    attachments: [
+      {
+        filename: "logo.png",
+        path: path.join(__dirname, "../mail/logo.png"),
+        cid: "logo",
+      },
+      {
+        filename: "forget_password.png",
+        path: path.join(__dirname, "../mail/forget_password.png"),
+        cid: "forget_password",
       },
     ],
   });
