@@ -8,6 +8,7 @@ import { isValidObjectId } from "mongoose";
 import PasswordResetToken from "#/models/passwordResetToken";
 import crypto from "crypto";
 import { PASSWORD_RESET_LINK } from "#/utils/variables";
+import { sendResetPasswordSuccessEmail } from "./../utils/mail";
 
 export const create: RequestHandler = async (req: CreateUser, res) => {
   const { name, email, password } = req.body;
@@ -104,21 +105,28 @@ export const generateForgetPasswordLink: RequestHandler = async (req, res) => {
   res.json({ message: "Please check your email for reset password link." });
 };
 
-export const isValidPasswordResetToken: RequestHandler = async (req, res) => {
-  const { userId, token } = req.body;
+export const grantValid: RequestHandler = async (req, res) => {
+  res.json({ valid: true });
+};
 
-  const resetToken = await PasswordResetToken.findOne({ owner: userId });
-  if (!resetToken) {
-    console.log("reset token");
-    return res
-      .status(403)
-      .json({ error: "Unauthorized access invalid token!" });
-  }
-  const verified = await resetToken.compareToken(token);
+export const updatePassword: RequestHandler = async (req, res) => {
+  const { userId, password } = req.body;
+  const user = await User.findById(userId);
 
-  if (!verified) {
+  if (!user) return res.status(403).json({ error: "Unauthorized access." });
+
+  const matched = await user.comparePassword(password);
+  if (matched)
     return res
-      .status(403)
-      .json({ error: "Unauthorized access invalid token!" });
-  } else return res.json({ message: "Token provided by you is valid." });
+      .status(422)
+      .json({ error: "The new password must be different!" });
+
+  user.password = password;
+  user.save();
+
+  await PasswordResetToken.findOneAndDelete({ owner: user._id });
+
+  await sendResetPasswordSuccessEmail(user.name, user.email);
+
+  res.json({ message: "Password reset successfully!" });
 };
