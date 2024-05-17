@@ -8,4 +8,5 @@ export const {
   PASSWORD_RESET_LINK,
   SIGN_IN_URL,
   MAIL_SERVICE,
+  JWT_SECRET_KEY,
 } = env;

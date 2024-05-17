@@ -61,3 +61,12 @@ export const UpdatePasswordSchema = yup.object().shape({
       "Password Must Contain  One Special Case Character"
     ),
 });
+
+export const SignInSchema = yup.object().shape({
+  email: yup
+    .string()
+    .trim()
+    .required("Email is a required field!")
+    .email("Please enter a valid email address."),
+  password: yup.string().trim().required("Password is a required field!"),
+});

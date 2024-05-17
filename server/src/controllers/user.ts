@@ -7,8 +7,9 @@ import EmailVerificationToken from "#/models/emailVerificationToken";
 import { isValidObjectId } from "mongoose";
 import PasswordResetToken from "#/models/passwordResetToken";
 import crypto from "crypto";
-import { PASSWORD_RESET_LINK } from "#/utils/variables";
+import { JWT_SECRET_KEY, PASSWORD_RESET_LINK } from "#/utils/variables";
 import { sendResetPasswordSuccessEmail } from "./../utils/mail";
+import jwt from "jsonwebtoken";
 
 export const create: RequestHandler = async (req: CreateUser, res) => {
   const { name, email, password } = req.body;
@@ -129,4 +130,38 @@ export const updatePassword: RequestHandler = async (req, res) => {
   await sendResetPasswordSuccessEmail(user.name, user.email);
 
   res.json({ message: "Password reset successfully!" });
+};
+
+export const singIn: RequestHandler = async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
+  if (!user)
+    return res
+      .status(404)
+      .json({ message: "No account found for this email!" });
+
+  const matched = await user.comparePassword(password);
+  if (!matched) {
+    return res
+      .status(403)
+      .json({ message: "Email/Password does not matches!" });
+  }
+
+  const token = jwt.sign({ userId: user._id }, JWT_SECRET_KEY);
+
+  user.tokens.push(token);
+  await user.save();
+
+  res.json({
+    profile: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      verified: user.verified,
+      avatar: user.avatar?.url,
+      followers: user.followers.length,
+      followings: user.followings.length,
+    },
+    token,
+  });
 };

@@ -3,6 +3,7 @@ import { validate } from "#/middleware/validator";
 import { Router } from "express";
 import {
   CreateUserSchema,
+  SignInSchema,
   TokenAndIDValidation,
   UpdatePasswordSchema,
 } from "#/utils/validationSchema";
@@ -10,10 +11,11 @@ import {
   create,
   generateForgetPasswordLink,
   sendReVerificationToken,
+  singIn,
   updatePassword,
   verifyEmail,
 } from "#/controllers/user";
-import { isValidPasswordResetToken } from "#/middleware/auth";
+import { isValidPasswordResetToken, mustAuth } from "#/middleware/auth";
 import { grantValid } from "./../controllers/user";
 
 const router = Router();
@@ -35,5 +37,18 @@ router.post(
   isValidPasswordResetToken,
   updatePassword
 );
+
+router.post("/sign-in", validate(SignInSchema), singIn);
+
+router.get("/is-auth", mustAuth, (req, res) => {
+  res.json({ profile: req.user });
+});
+
+router.get("/public", (req, res) => {
+  res.json({ message: "You are in public route." });
+});
+router.get("/private", mustAuth, (req, res) => {
+  res.json({ message: "You are in private route." });
+});
 
 export default router;
