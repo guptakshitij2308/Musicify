@@ -9,4 +9,7 @@ export const {
   SIGN_IN_URL,
   MAIL_SERVICE,
   JWT_SECRET_KEY,
+  CLOUD_NAME,
+  CLOUD_KEY,
+  CLOULD_SECRET,
 } = env;
