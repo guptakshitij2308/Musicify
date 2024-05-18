@@ -2,13 +2,13 @@ import { RequestHandler } from "express";
 import { CreateUser, VerifyEmailRequest } from "#/@types/user";
 import User from "#/models/user";
 import { sendForgetPasswordLink, sendMail } from "#/utils/mail";
-import { generateToken } from "#/utils/helper";
+import { formatProfile, generateToken } from "#/utils/helper";
 import EmailVerificationToken from "#/models/emailVerificationToken";
 import { isValidObjectId } from "mongoose";
 import PasswordResetToken from "#/models/passwordResetToken";
 import crypto from "crypto";
 import { JWT_SECRET_KEY, PASSWORD_RESET_LINK } from "#/utils/variables";
-import { sendResetPasswordSuccessEmail } from "./../utils/mail";
+import { sendResetPasswordSuccessEmail } from "../utils/mail";
 import jwt from "jsonwebtoken";
 import { RequestWithFiles } from "#/middleware/fileParser";
 import cloudinary from "#/cloud";
@@ -210,5 +210,34 @@ export const updateProfile: RequestHandler = async (
     await user.save();
   }
 
-  res.json({ message: "Profile updated successfully!", avatar: user.avatar });
+  res.json({
+    message: "Profile updated successfully!",
+    avatar: formatProfile(user),
+  });
+};
+
+export const sendProfile: RequestHandler = (req, res) => {
+  res.json({ profile: req.user });
+};
+
+export const logOut: RequestHandler = async (req, res) => {
+  const { fromAll } = req.query;
+  const token = req.token;
+
+  const user = await User.findById(req.user.id);
+  if (!user) throw new Error("User not found.Please try again later!");
+
+  // logout from all devices : /auth/logout/fromAll=true
+  if (fromAll === "yes") {
+    user.tokens = [];
+  }
+
+  // logout from current device
+  else {
+    user.tokens = user.tokens.filter((t: string) => t !== token);
+  }
+
+  await user.save();
+
+  res.json({ success: true });
 };
