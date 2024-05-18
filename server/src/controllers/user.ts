@@ -10,6 +10,9 @@ import crypto from "crypto";
 import { JWT_SECRET_KEY, PASSWORD_RESET_LINK } from "#/utils/variables";
 import { sendResetPasswordSuccessEmail } from "./../utils/mail";
 import jwt from "jsonwebtoken";
+import { RequestWithFiles } from "#/middleware/fileParser";
+import cloudinary from "#/cloud";
+import formidable from "formidable";
 
 export const create: RequestHandler = async (req: CreateUser, res) => {
   const { name, email, password } = req.body;
@@ -164,4 +167,48 @@ export const singIn: RequestHandler = async (req, res) => {
     },
     token,
   });
+};
+
+export const updateProfile: RequestHandler = async (
+  req: RequestWithFiles,
+  res
+) => {
+  const { name } = req.body;
+  const avatar = req.files?.avatar as formidable.File;
+
+  const user = await User.findById(req.user.id);
+
+  if (!user) throw new Error("User not found!");
+
+  if (typeof name !== "string")
+    return res.status(422).json({ error: "Invalid name!" });
+
+  if (name.trim().length < 3)
+    return res.status(422).json({ error: "Invalid name!" });
+
+  user.name = name;
+
+  if (avatar) {
+    // if already an avatar remove it
+
+    if (user.avatar?.publicId) {
+      await cloudinary.uploader.destroy(user.avatar.publicId);
+    }
+
+    // else add a new avatar
+    const { secure_url, public_id } = await cloudinary.uploader.upload(
+      avatar.filepath,
+      {
+        width: 300,
+        height: 300,
+        crop: "thumb",
+        gravity: "face",
+      }
+    );
+
+    user.avatar = { url: secure_url, publicId: public_id };
+    await user.save();
+  }
+
+  res.json({ message: "Profile updated successfully!", avatar: user.avatar });
 };

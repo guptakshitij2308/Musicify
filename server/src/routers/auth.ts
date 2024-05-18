@@ -13,6 +13,7 @@ import {
   sendReVerificationToken,
   singIn,
   updatePassword,
+  updateProfile,
   verifyEmail,
 } from "#/controllers/user";
 import { isValidPasswordResetToken, mustAuth } from "#/middleware/auth";
@@ -74,9 +75,6 @@ router.get("/private", mustAuth, (req, res) => {
 //     res.json({ uploaded: true, message: "Profile updated successfully!" });
 //   });
 // });
-router.post("/update-profile", fileParser, (req: RequestWithFiles, res) => {
-  console.log(req.files);
-  res.json({ valid: true });
-});
+router.post("/update-profile", mustAuth, fileParser, updateProfile);
 
 export default router;

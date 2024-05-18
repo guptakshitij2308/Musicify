@@ -11,5 +11,5 @@ export const {
   JWT_SECRET_KEY,
   CLOUD_NAME,
   CLOUD_KEY,
-  CLOULD_SECRET,
+  CLOUD_SECRET,
 } = env;
