@@ -57,3 +57,10 @@ export const mustAuth: RequestHandler = async (req, res, next) => {
 
   next();
 };
+
+export const isVerified: RequestHandler = async (req, res, next) => {
+  const { verified } = req.user;
+  if (!verified)
+    return res.status(403).json({ error: "Please verify your email first!" });
+  next();
+};
