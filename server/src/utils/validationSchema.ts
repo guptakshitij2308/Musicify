@@ -80,3 +80,33 @@ export const AudioValidationSchema = yup.object().shape({
     .oneOf(categories, "Invalid Category!")
     .required("Category is a required field!"),
 });
+
+// User can create an empty playlist as well as add audio items to a playlist ; hence resouce id is optional
+
+export const NewPlaylistValidationSchema = yup.object().shape({
+  title: yup.string().trim().required("Title is a required field!"),
+  resId: yup.string().transform(function (value) {
+    if (this.isType(value) && isValidObjectId(value)) return value;
+    else return "";
+  }), // items: []
+  visibility: yup
+    .string()
+    .oneOf(["public", "private"], "Visibility must be public or private!"),
+});
+
+export const OldPlaylistValidationSchema = yup.object().shape({
+  title: yup.string().trim().required("Title is a required field!"),
+  // for audio id
+  item: yup.string().transform(function (value) {
+    if (this.isType(value) && isValidObjectId(value)) return value;
+    else return "";
+  }),
+  // for playlist id
+  id: yup.string().transform(function (value) {
+    if (this.isType(value) && isValidObjectId(value)) return value;
+    else return "";
+  }),
+  visibility: yup
+    .string()
+    .oneOf(["public", "private"], "Visibility must be public or private!"),
+});
