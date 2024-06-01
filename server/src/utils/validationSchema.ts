@@ -110,3 +110,22 @@ export const OldPlaylistValidationSchema = yup.object().shape({
     .string()
     .oneOf(["public", "private"], "Visibility must be public or private!"),
 });
+
+export const HistoryUpdateSchema = yup.object().shape({
+  audio: yup
+    .string()
+    .transform(function (value) {
+      if (this.isType(value) && isValidObjectId(value)) return value;
+      else return "";
+    })
+    .required("Audio is a required field!"),
+  progress: yup.number().required("History progress is required!"),
+  date: yup
+    .string()
+    .transform(function (value) {
+      const date = new Date(value);
+      if (date instanceof Date) return value;
+      else return "";
+    })
+    .required("Date is a required field!"),
+});
