@@ -30,5 +30,6 @@ router.patch(
 );
 
 router.get("/latest", getLatestUploads);
+// router.get("/test", testFunc);
 
 export default router;

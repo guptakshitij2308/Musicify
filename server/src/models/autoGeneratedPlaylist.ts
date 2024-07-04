@@ -2,7 +2,6 @@ import { Model, model, models, ObjectId, Schema } from "mongoose";
 
 interface AutoPlaylistDocument {
   title: string;
-
   items: ObjectId[];
 }
 
