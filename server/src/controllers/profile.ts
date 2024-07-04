@@ -1,9 +1,11 @@
 import { RequestHandler } from "express";
-import { isValidObjectId } from "mongoose";
+import { isValidObjectId, PipelineStage } from "mongoose";
 import User from "#/models/user";
 import { paginationQuery } from "#/@types/misc";
 import Audio from "#/models/audio";
 import Playlist from "#/models/playlist";
+import History from "#/models/history";
+import moment from "moment";
 
 export const updateFollower: RequestHandler = async (req, res) => {
   const { profileId } = req.params;
@@ -164,4 +166,118 @@ export const getPublicProfilePlaylist: RequestHandler = async (req, res) => {
       };
     }),
   });
+};
+
+export const getRecommendedByProfile: RequestHandler = async (req, res) => {
+  const user = req.user;
+
+  let matchOptions: PipelineStage.Match = {
+    $match: {
+      _id: { $exists: true },
+    },
+  };
+
+  if (user) {
+    // send audios accoring to profile
+    // console.log(user);
+    // fetch users previous history
+    const userPreviousHistory = await History.aggregate([
+      {
+        $match: {
+          owner: req.user.id,
+        },
+      },
+      {
+        $unwind: "$all",
+      },
+      {
+        $match: {
+          "all.date": {
+            // match only those hitories which are not older than 30 days
+            $gte: moment().subtract(30, "days").toDate(),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$all.audio",
+        },
+      },
+      {
+        $lookup: {
+          from: "audios",
+          localField: "_id",
+          foreignField: "_id",
+          as: "audioInfo",
+        },
+      },
+      {
+        $unwind: "$audioInfo",
+      },
+      {
+        $group: {
+          _id: null,
+          category: {
+            $addToSet: "$audioInfo.category",
+          },
+        },
+      },
+    ]); // in the last 30 days user is listening to these category music
+
+    // console.log(userPreviousHistory)
+
+    const categories = userPreviousHistory[0]?.category;
+
+    if (categories?.length) {
+      matchOptions = {
+        $match: {
+          category: { $in: categories },
+        },
+      };
+    }
+  }
+
+  // send generic audios
+  const audios = await Audio.aggregate([
+    // {
+    //   $match: {
+    //     _id: { $exists: true },
+    //   },
+    // },
+    matchOptions,
+    {
+      $sort: {
+        "likes.count": -1,
+      },
+    },
+    { $limit: 10 },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "owner",
+      },
+    },
+    {
+      $unwind: "$owner",
+    },
+    {
+      $project: {
+        _id: 0,
+        id: "$_id",
+        title: "$title",
+        category: "$category",
+        about: "$about",
+        file: "$file.url",
+        poster: "$poster.url",
+        owner: {
+          id: "$owner._id",
+          name: "$owner.name",
+        },
+      },
+    },
+  ]);
+
+  res.json({ audios });
 };

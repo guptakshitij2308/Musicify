@@ -1,3 +1,5 @@
+import { PopulatedFavList } from "#/@types/audio";
+import { paginationQuery } from "#/@types/misc";
 import cloudinary from "#/cloud";
 import { RequestWithFiles } from "#/middleware/fileParser";
 import Audio from "#/models/audio";
@@ -117,4 +119,25 @@ export const updateAudio: RequestHandler = async (
       category,
     },
   });
+};
+
+export const getLatestUploads: RequestHandler = async (req, res) => {
+  const uploads = await Audio.find()
+    .limit(10)
+    .sort({ createdAt: -1 })
+    .populate<PopulatedFavList>("owner");
+
+  const audios = uploads.map((upload) => {
+    return {
+      id: upload._id,
+      title: upload.title,
+      about: upload.about,
+      category: upload.category,
+      file: upload.file.url,
+      poster: upload.poster?.url,
+      owner: { name: upload.owner.name, id: upload.owner._id },
+    };
+  });
+
+  res.json({ audios });
 };
