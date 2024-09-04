@@ -2,16 +2,23 @@ import { RequestHandler } from "express";
 import { CreateUser, VerifyEmailRequest } from "#/@types/user";
 import User from "#/models/user";
 import { sendForgetPasswordLink, sendMail } from "#/utils/mail";
-import { generateToken } from "#/utils/helper";
+import { formatProfile, generateToken } from "#/utils/helper";
 import EmailVerificationToken from "#/models/emailVerificationToken";
 import { isValidObjectId } from "mongoose";
 import PasswordResetToken from "#/models/passwordResetToken";
 import crypto from "crypto";
-import { PASSWORD_RESET_LINK } from "#/utils/variables";
-import { sendResetPasswordSuccessEmail } from "./../utils/mail";
+import { JWT_SECRET_KEY, PASSWORD_RESET_LINK } from "#/utils/variables";
+import { sendResetPasswordSuccessEmail } from "../utils/mail";
+import jwt from "jsonwebtoken";
+import { RequestWithFiles } from "#/middleware/fileParser";
+import cloudinary from "#/cloud";
+import formidable from "formidable";
 
 export const create: RequestHandler = async (req: CreateUser, res) => {
   const { name, email, password } = req.body;
+  const oldUser = await User.findOne({ email });
+  if (oldUser)
+    return res.status(403).json({ error: "This email is already in use!" });
   const user = await User.create({ name, email, password });
 
   // Verfication email
@@ -129,4 +136,111 @@ export const updatePassword: RequestHandler = async (req, res) => {
   await sendResetPasswordSuccessEmail(user.name, user.email);
 
   res.json({ message: "Password reset successfully!" });
+};
+
+export const singIn: RequestHandler = async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
+  if (!user)
+    return res
+      .status(404)
+      .json({ message: "No account found for this email!" });
+
+  const matched = await user.comparePassword(password);
+  if (!matched) {
+    return res
+      .status(403)
+      .json({ message: "Email/Password does not matches!" });
+  }
+
+  const token = jwt.sign({ userId: user._id }, JWT_SECRET_KEY);
+
+  user.tokens.push(token);
+  await user.save();
+
+  res.json({
+    profile: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      verified: user.verified,
+      avatar: user.avatar?.url,
+      followers: user.followers.length,
+      followings: user.followings.length,
+    },
+    token,
+  });
+};
+
+export const updateProfile: RequestHandler = async (
+  req: RequestWithFiles,
+  res
+) => {
+  const { name } = req.body;
+  const avatar = req.files?.avatar as formidable.File;
+
+  const user = await User.findById(req.user.id);
+
+  if (!user) throw new Error("User not found!");
+
+  if (typeof name !== "string")
+    return res.status(422).json({ error: "Invalid name!" });
+
+  if (name.trim().length < 3)
+    return res.status(422).json({ error: "Invalid name!" });
+
+  user.name = name;
+
+  if (avatar) {
+    // if already an avatar remove it
+
+    if (user.avatar?.publicId) {
+      await cloudinary.uploader.destroy(user.avatar.publicId);
+    }
+
+    // else add a new avatar
+    const { secure_url, public_id } = await cloudinary.uploader.upload(
+      avatar.filepath,
+      {
+        width: 300,
+        height: 300,
+        crop: "thumb",
+        gravity: "face",
+      }
+    );
+
+    user.avatar = { url: secure_url, publicId: public_id };
+    await user.save();
+  }
+
+  res.json({
+    message: "Profile updated successfully!",
+    avatar: formatProfile(user),
+  });
+};
+
+export const sendProfile: RequestHandler = (req, res) => {
+  res.json({ profile: req.user });
+};
+
+export const logOut: RequestHandler = async (req, res) => {
+  const { fromAll } = req.query;
+  const token = req.token;
+
+  const user = await User.findById(req.user.id);
+  if (!user) throw new Error("User not found.Please try again later!");
+
+  // logout from all devices : /auth/logout/fromAll=true
+  if (fromAll === "yes") {
+    user.tokens = [];
+  }
+
+  // logout from current device
+  else {
+    user.tokens = user.tokens.filter((t: string) => t !== token);
+  }
+
+  await user.save();
+
+  res.json({ success: true });
 };
