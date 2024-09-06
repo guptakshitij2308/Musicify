@@ -3,6 +3,7 @@ import { Favourite } from "#/models/favourite";
 import { RequestHandler } from "express";
 import { isValidObjectId, ObjectId } from "mongoose";
 import { PopulatedFavList } from "../@types/audio";
+import { paginationQuery } from "#/@types/misc";
 
 export const toggleFavourite: RequestHandler = async (req, res) => {
   const audioId = req.query.audioId as string;
@@ -64,27 +65,72 @@ export const toggleFavourite: RequestHandler = async (req, res) => {
 
 export const getFavourites: RequestHandler = async (req, res) => {
   const ownerId = req.user.id;
-  const favourites = await Favourite.findOne({ owner: ownerId }).populate<{
-    items: PopulatedFavList[];
-  }>({
-    path: "items",
-    populate: { path: "owner" }, //deep populate
-  });
+  const { page = "0", limit = "20" } = req.query as paginationQuery;
+  // console.log(parseInt(page), parseInt(limit));
 
-  if (!favourites) return res.json({ audios: [] });
+  const favourites = await Favourite.aggregate([
+    { $match: { owner: ownerId } },
+    {
+      $project: {
+        audioIds: {
+          $slice: ["$items", parseInt(page) * parseInt(limit), parseInt(limit)],
+        },
+      },
+    },
+    { $unwind: "$audioIds" },
+    {
+      $lookup: {
+        from: "audios",
+        localField: "audioIds",
+        foreignField: "_id",
+        as: "audioInfo",
+      },
+    },
+    { $unwind: "$audioInfo" },
+    {
+      $lookup: {
+        from: "users",
+        localField: "audioInfo.owner",
+        foreignField: "_id",
+        as: "ownerInfo",
+      },
+    },
+    { $unwind: "$ownerInfo" },
+    {
+      $project: {
+        _id: "$audioInfo._id",
+        title: "$audioInfo.title",
+        category: "$audioInfo.category",
+        file: "$audioInfo.file.url",
+        poster: "$audioInfo.poster.url",
+        owner: { name: "$ownerInfo.name", id: "$ownerInfo._id" },
+      },
+    },
+  ]);
 
-  const audios = favourites.items.map((item) => {
-    return {
-      id: item._id,
-      title: item.title,
-      category: item.category,
-      file: item.file.url,
-      poster: item.poster?.url,
-      owner: { name: item.owner.name, id: item.owner._id },
-    };
-  });
+  res.status(200).json(favourites);
 
-  res.json({ audios });
+  // const favourites = await Favourite.findOne({ owner: ownerId }).populate<{
+  //   items: PopulatedFavList[];
+  // }>({
+  //   path: "items",
+  //   populate: { path: "owner" }, //deep populate
+  // });
+
+  // if (!favourites) return res.json({ audios: [] });
+
+  // const audios = favourites.items.map((item) => {
+  //   return {
+  //     id: item._id,
+  //     title: item.title,
+  //     category: item.category,
+  //     file: item.file.url,
+  //     poster: item.poster?.url,
+  //     owner: { name: item.owner.name, id: item.owner._id },
+  //   };
+  // });
+
+  // res.json({ audios });
 };
 
 export const getIsFavourite: RequestHandler = async (req, res) => {
