@@ -1,5 +1,6 @@
 import AppInput from '@ui/AppInput';
 import colors from '@utils/colors';
+import {useFormikContext} from 'formik';
 import {FC} from 'react';
 import {
   View,
@@ -11,6 +12,7 @@ import {
 } from 'react-native';
 
 interface Props extends TextInputProps {
+  name: string;
   placeholder?: string;
   label?: string;
   value?: string;
@@ -19,15 +21,19 @@ interface Props extends TextInputProps {
   autoCaptitalize?: TextInputProps['autoCapitalize'];
   secureTextEntry?: boolean;
   containerStyle?: StyleProp<ViewStyle>;
-  onChange?: (text: string) => void;
 }
 
 const AuthInputField: FC<Props> = props => {
+  const {handleChange, values, errors, handleBlur, touched} = useFormikContext<{
+    [key: string]: string;
+  }>();
+  const errorMsg =
+    touched[props.name] && errors[props.name] ? errors[props.name] : '';
   return (
     <View style={[props.containerStyle, styles.container]}>
       <View style={styles.labelContainer}>
         <Text style={styles.label}>{props.label}</Text>
-        <Text style={styles.errorMsg}>{props.errorMessage}</Text>
+        <Text style={styles.errorMsg}>{errorMsg}</Text>
       </View>
       <AppInput
         placeholderTextColor={colors.INACTIVE_CONTRAST}
@@ -35,8 +41,9 @@ const AuthInputField: FC<Props> = props => {
         keyboardType={props.keyboardType}
         autoCapitalize={props.autoCapitalize}
         secureTextEntry={props.secureTextEntry}
-        onChangeText={props.onChange}
-        value={props.value}
+        onChangeText={handleChange(props.name)}
+        value={values[props.name]}
+        onBlur={handleBlur(props.name)}
       />
     </View>
   );
