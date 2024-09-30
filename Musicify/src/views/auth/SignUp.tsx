@@ -1,30 +1,88 @@
+import AuthInputField from '@components/AuthInputField';
 import colors from '@utils/colors';
-import {FC} from 'react';
-import {View, StyleSheet, TextInput, SafeAreaView, Text} from 'react-native';
+import {FC, useState} from 'react';
+import {View, StyleSheet, SafeAreaView, Button} from 'react-native';
 
 interface Props {}
 
 const SignUp: FC<Props> = props => {
+  const [userInfo, setUserInfo] = useState({name: '', email: '', password: ''});
+  const [errorInfo, setErrorInfo] = useState({
+    name: '',
+    email: '',
+    password: '',
+  });
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.formContainer}>
-        <Text style={styles.label}>Name</Text>
-        <TextInput
+        {/* <Text style={styles.label}>Name</Text>
+        <AppInput
           placeholderTextColor={colors.INACTIVE_CONTRAST}
           placeholder="Name"
-          style={styles.input}
+        /> */}
+        <AuthInputField
+          label="Name"
+          placeholder="John Doe"
+          containerStyle={styles.marginBottom}
+          onChange={text => setUserInfo({...userInfo, name: text})}
+          errorMessage={errorInfo.name}
         />
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          placeholderTextColor={colors.INACTIVE_CONTRAST}
+        {/* <Text style={styles.label}>Email</Text>
+        <AppInput
+        placeholderTextColor={colors.INACTIVE_CONTRAST}
           placeholder="Email"
-          style={styles.input}
+          autoCapitalize="none"
+        /> */}
+        <AuthInputField
+          label="Email"
+          placeholder="email@example.com"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          containerStyle={styles.marginBottom}
+          onChange={text => setUserInfo({...userInfo, email: text})}
+          errorMessage={errorInfo.email}
         />
-        <Text style={styles.label}>Password</Text>
-        <TextInput
-          placeholderTextColor={colors.INACTIVE_CONTRAST}
+        {/* <Text style={styles.label}>Password</Text>
+        <AppInput
+        placeholderTextColor={colors.INACTIVE_CONTRAST}
+        placeholder="********"
+          secureTextEntry={true}
+          /> */}
+        <AuthInputField
+          label="Password"
           placeholder="********"
-          style={styles.input}
+          secureTextEntry={true}
+          autoCapitalize="none"
+          onChange={text => setUserInfo({...userInfo, password: text})}
+          errorMessage={errorInfo.password}
+        />
+        <Button
+          title="Sign Up"
+          onPress={() => {
+            if (!userInfo.name) {
+              return setErrorInfo({
+                email: '',
+                password: '',
+                name: 'Name is required',
+              });
+            }
+            if (!userInfo.email) {
+              return setErrorInfo({
+                name: '',
+                password: '',
+                email: 'Email is required',
+              });
+            }
+            if (!userInfo.password) {
+              return setErrorInfo({
+                name: '',
+                email: '',
+                password: 'Password is required',
+              });
+            }
+            setErrorInfo({...errorInfo, name: '', email: '', password: ''});
+            console.log(userInfo);
+          }}
         />
       </View>
     </SafeAreaView>
@@ -38,18 +96,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  input: {
-    borderWidth: 2,
-    borderColor: colors.SECONDARY,
-    height: 45,
-    borderRadius: 25,
-    color: colors.CONTRAST,
-    paddingHorizontal: 10,
-  },
   label: {color: colors.CONTRAST},
   formContainer: {
     width: '100%',
     paddingHorizontal: 20,
+  },
+  marginBottom: {
+    marginBottom: 20,
   },
 });
 
