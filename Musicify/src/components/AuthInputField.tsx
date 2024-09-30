@@ -13,6 +13,7 @@ import {
 interface Props extends TextInputProps {
   placeholder?: string;
   label?: string;
+  value?: string;
   errorMessage?: string;
   keyboardType?: TextInputProps['keyboardType'];
   autoCaptitalize?: TextInputProps['autoCapitalize'];
@@ -35,6 +36,7 @@ const AuthInputField: FC<Props> = props => {
         autoCapitalize={props.autoCapitalize}
         secureTextEntry={props.secureTextEntry}
         onChangeText={props.onChange}
+        value={props.value}
       />
     </View>
   );

@@ -1,90 +1,87 @@
 import AuthInputField from '@components/AuthInputField';
 import colors from '@utils/colors';
+import {Formik} from 'formik';
 import {FC, useState} from 'react';
 import {View, StyleSheet, SafeAreaView, Button} from 'react-native';
+import * as yup from 'yup';
 
 interface Props {}
 
+const signUpSchema = yup.object({
+  name: yup
+    .string()
+    .trim('Name is missing!')
+    .min(3, 'Name is too short!')
+    .required('Name is missing!'),
+  email: yup
+    .string()
+    .trim('Email is missing!')
+    .email('Please enter a valid email')
+    .required('Email is missing!'),
+  password: yup
+    .string()
+    .trim('Password is missing')
+    .min(8, 'Password too short!')
+    .matches(/^(?=.*[a-z])/, 'Password Must Contain One Lowercase Character')
+    .matches(/^(?=.*[A-Z])/, 'Password Must Contain One Uppercase Character')
+    .matches(/^(?=.*[0-9])/, 'Password Must Contain One Number Character')
+    .matches(
+      /^(?=.*[!@#\$%\^&\*])/,
+      'Password Must Contain  One Special Case Character',
+    )
+    .required('Password is required'),
+});
+
 const SignUp: FC<Props> = props => {
-  const [userInfo, setUserInfo] = useState({name: '', email: '', password: ''});
-  const [errorInfo, setErrorInfo] = useState({
-    name: '',
-    email: '',
-    password: '',
-  });
+  const initialValues = {name: '', email: '', password: ''};
+  const [userInfo, setUserInfo] = useState(initialValues);
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.formContainer}>
-        {/* <Text style={styles.label}>Name</Text>
-        <AppInput
-          placeholderTextColor={colors.INACTIVE_CONTRAST}
-          placeholder="Name"
-        /> */}
-        <AuthInputField
-          label="Name"
-          placeholder="John Doe"
-          containerStyle={styles.marginBottom}
-          onChange={text => setUserInfo({...userInfo, name: text})}
-          errorMessage={errorInfo.name}
-        />
-        {/* <Text style={styles.label}>Email</Text>
-        <AppInput
-        placeholderTextColor={colors.INACTIVE_CONTRAST}
-          placeholder="Email"
-          autoCapitalize="none"
-        /> */}
-        <AuthInputField
-          label="Email"
-          placeholder="email@example.com"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          containerStyle={styles.marginBottom}
-          onChange={text => setUserInfo({...userInfo, email: text})}
-          errorMessage={errorInfo.email}
-        />
-        {/* <Text style={styles.label}>Password</Text>
-        <AppInput
-        placeholderTextColor={colors.INACTIVE_CONTRAST}
-        placeholder="********"
-          secureTextEntry={true}
-          /> */}
-        <AuthInputField
-          label="Password"
-          placeholder="********"
-          secureTextEntry={true}
-          autoCapitalize="none"
-          onChange={text => setUserInfo({...userInfo, password: text})}
-          errorMessage={errorInfo.password}
-        />
-        <Button
-          title="Sign Up"
-          onPress={() => {
-            if (!userInfo.name) {
-              return setErrorInfo({
-                email: '',
-                password: '',
-                name: 'Name is required',
-              });
-            }
-            if (!userInfo.email) {
-              return setErrorInfo({
-                name: '',
-                password: '',
-                email: 'Email is required',
-              });
-            }
-            if (!userInfo.password) {
-              return setErrorInfo({
-                name: '',
-                email: '',
-                password: 'Password is required',
-              });
-            }
-            setErrorInfo({...errorInfo, name: '', email: '', password: ''});
-            console.log(userInfo);
-          }}
-        />
-      </View>
+      <Formik
+        initialValues={initialValues}
+        onSubmit={values => console.log(values)}
+        validationSchema={signUpSchema}>
+        {({handleSubmit, values, handleChange, errors}) => {
+          // {
+          //   console.log(errors);
+          // }
+          return (
+            <View style={styles.formContainer}>
+              <AuthInputField
+                label="Name"
+                placeholder="John Doe"
+                containerStyle={styles.marginBottom}
+                onChange={handleChange('name')}
+                value={values.name}
+                errorMessage={errors.name}
+              />
+
+              <AuthInputField
+                label="Email"
+                placeholder="email@example.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                containerStyle={styles.marginBottom}
+                onChange={handleChange('email')}
+                value={values.email}
+                errorMessage={errors.email}
+              />
+
+              <AuthInputField
+                label="Password"
+                placeholder="********"
+                secureTextEntry={true}
+                autoCapitalize="none"
+                value={values.password}
+                onChange={handleChange('password')}
+                errorMessage={errors.password}
+              />
+              <Button title="Sign Up" onPress={handleSubmit} />
+            </View>
+          );
+        }}
+      </Formik>
     </SafeAreaView>
   );
 };
