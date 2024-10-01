@@ -5,6 +5,7 @@ import colors from '@utils/colors';
 import {FC} from 'react';
 import {SafeAreaView, StyleSheet, View} from 'react-native';
 import * as yup from 'yup';
+import Icon from 'react-native-vector-icons/Entypo';
 
 interface Props {}
 
@@ -73,6 +74,8 @@ const SignUp: FC<Props> = props => {
             secureTextEntry={true}
             autoCapitalize="none"
             containerStyle={styles.marginBottom}
+            rightIcon={<Icon name="eye" size={20} color={colors.CONTRAST} />}
+            // onRightIconPress={}
             // value={values.password}
             // onTextChange={handleChange('password')}
             // errorMessage={errors.password}
