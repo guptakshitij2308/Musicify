@@ -12,10 +12,10 @@ interface Props {
 const AuthFormContainer: FC<Props> = ({children, title, subtitle}) => {
   return (
     <View style={styles.container}>
-      <CircleUi position="top-left" size={150} />
-      <CircleUi position="top-right" size={100} />
-      <CircleUi position="bottom-left" size={100} />
-      <CircleUi position="bottom-right" size={150} />
+      <CircleUi position="top-left" size={250} />
+      <CircleUi position="top-right" size={200} />
+      <CircleUi position="bottom-left" size={200} />
+      <CircleUi position="bottom-right" size={250} />
 
       <View style={styles.header}>
         <View style={{alignItems: 'center'}}>
