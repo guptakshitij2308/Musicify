@@ -1,11 +1,12 @@
+import AuthFormContainer from '@components/AuthFormContainer';
 import Form from '@components/form';
 import AuthInputField from '@components/form/AuthInputField';
 import SubmitBtn from '@components/form/SubmitBtn';
-import colors from '@utils/colors';
-import {FC} from 'react';
-import {SafeAreaView, StyleSheet, View} from 'react-native';
+import AppLink from '@ui/AppLink';
+import PasswordVisibilityIcon from '@ui/PasswordVisibilityIcon';
+import {FC, useState} from 'react';
+import {StyleSheet, View} from 'react-native';
 import * as yup from 'yup';
-import Icon from 'react-native-vector-icons/Entypo';
 
 interface Props {}
 
@@ -37,22 +38,22 @@ const signUpSchema = yup.object().shape({
 const SignUp: FC<Props> = props => {
   const initialValues = {name: '', email: '', password: ''};
   // const [userInfo, setUserInfo] = useState(initialValues);
+  const [secureEntry, setSecureEntry] = useState(true);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Form
-        initialValues={initialValues}
-        onSubmit={values => console.log(values)}
-        validationSchema={signUpSchema}>
+    <Form
+      initialValues={initialValues}
+      onSubmit={values => console.log(values)}
+      validationSchema={signUpSchema}>
+      <AuthFormContainer
+        title="Welcome!"
+        subtitle="Let's create your account to get started">
         <View style={styles.formContainer}>
           <AuthInputField
             name="name"
             label="Name"
             placeholder="John Doe"
             containerStyle={styles.marginBottom}
-            // onTextChange={handleChange('name')}
-            // value={values.name}
-            // errorMessage={errors.name}
           />
 
           <AuthInputField
@@ -62,46 +63,43 @@ const SignUp: FC<Props> = props => {
             keyboardType="email-address"
             autoCapitalize="none"
             containerStyle={styles.marginBottom}
-            // onTextChange={handleChange('email')}
-            // value={values.email}
-            // errorMessage={errors.email}
           />
 
           <AuthInputField
             name="password"
             label="Password"
             placeholder="********"
-            secureTextEntry={true}
+            secureTextEntry={secureEntry}
             autoCapitalize="none"
             containerStyle={styles.marginBottom}
-            rightIcon={<Icon name="eye" size={20} color={colors.CONTRAST} />}
-            // onRightIconPress={}
-            // value={values.password}
-            // onTextChange={handleChange('password')}
-            // errorMessage={errors.password}
+            rightIcon={<PasswordVisibilityIcon privateIcon={secureEntry} />}
+            onRightIconPress={() => setSecureEntry(!secureEntry)}
           />
           {/* <Button title="Sign Up" /> */}
           <SubmitBtn title="Sign Up" />
+          <View style={styles.linkContainer}>
+            <AppLink title="Forgot Password" />
+            <AppLink title="Sign in" />
+          </View>
         </View>
-      </Form>
-    </SafeAreaView>
+      </AuthFormContainer>
+    </Form>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.PRIMARY,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  label: {color: colors.CONTRAST},
   formContainer: {
     width: '100%',
     paddingHorizontal: 20,
   },
   marginBottom: {
     marginBottom: 20,
+  },
+  linkContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    marginHorizontal: 20,
   },
 });
 
