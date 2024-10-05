@@ -1,18 +1,16 @@
-import Verification from '@views/auth/Verification';
+import {NavigationContainer} from '@react-navigation/native';
 import {FC} from 'react';
 import {SafeAreaView, StyleSheet} from 'react-native';
-// import SignUp from './src/views/auth/SignUp';
+import AuthNavigator from 'src/navigation/AuthNavigation';
 
 interface Props {}
 
 const App: FC<Props> = props => {
   return (
     <SafeAreaView style={styles.container}>
-      {/* <SignUp /> */}
-      {/* <SignIn /> */}
-      {/* <LostPassword /> */}
-
-      <Verification />
+      <NavigationContainer>
+        <AuthNavigator />
+      </NavigationContainer>
     </SafeAreaView>
   );
 };
