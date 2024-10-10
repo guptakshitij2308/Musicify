@@ -1,35 +1,36 @@
 import AuthFormContainer from '@components/AuthFormContainer';
 import Form from '@components/form';
 import SubmitBtn from '@components/form/SubmitBtn';
+import {NavigationProp, useNavigation} from '@react-navigation/native';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import AppLink from '@ui/AppLink';
 import OTPField from '@ui/OTPField';
+import colors from '@utils/colors';
 import {FC, useEffect, useRef, useState} from 'react';
-import {Keyboard, StyleSheet, TextInput, View} from 'react-native';
-import * as yup from 'yup';
+import {Keyboard, StyleSheet, Text, TextInput, View} from 'react-native';
+import {AuthStackParamsList} from 'src/@types/navigation';
+import client from 'src/api/client';
 
-interface Props {}
-
-const lostPassword = yup.object().shape({
-  email: yup
-    .string()
-    .trim('Email is missing!')
-    .email('Please enter a valid email')
-    .required('Email is missing!'),
-});
+type Props = NativeStackScreenProps<AuthStackParamsList, 'Verification'>;
 
 const otpFields = new Array(6).fill('');
 
 const Verification: FC<Props> = props => {
-  const initialValues = {email: ''};
-
   const [otp, setOtp] = useState([...otpFields]);
   const [activeOtpIndex, setActiveOtpIndex] = useState(0);
   const inputRef = useRef<TextInput>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [countDown, setCountDown] = useState(60);
+  const [canSendNewOtp, setCanSendNewOtp] = useState(false);
+
+  // console.log(props.route.params.userInfo, 'Hello!');
+  const {userInfo} = props.route.params;
 
   function handleChange(value: string, idx: number) {
     const newOTP = [...otp];
     // moves to prev only if the field is empty
     // console.log(idx);
+
     if (value === 'Backspace') {
       if (!newOTP[idx]) {
         setActiveOtpIndex(idx - 1);
@@ -60,14 +61,63 @@ const Verification: FC<Props> = props => {
     inputRef.current?.focus();
   }, [activeOtpIndex]);
 
+  useEffect(() => {
+    if (canSendNewOtp) return;
+    const intervalId = setInterval(() => {
+      setCountDown(prev => {
+        if (prev <= 0) {
+          setCanSendNewOtp(true);
+          clearInterval(intervalId);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // We have to use clearInterval to clear the interval
+    return () => clearInterval(intervalId);
+  }, [canSendNewOtp]);
+
+  const isValidOtp = otp.every(value => {
+    return value.trim();
+  });
+  const navigation = useNavigation<NavigationProp<AuthStackParamsList>>();
+
+  const handleSubmit = async () => {
+    // console.log('Hello');
+    if (!isValidOtp) {
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await client.post('/auth/verify-email', {
+        token: otp.join(''),
+        userId: userInfo.id,
+      });
+      // console.log(res);
+      const {data} = res;
+      console.log(data);
+      navigation.navigate('SignIn');
+    } catch (e) {
+      console.log('Error in verifying the token', e);
+    }
+    setSubmitting(false);
+  };
+
+  const requestForOTP = async () => {
+    // console.log('Hello');
+    setCountDown(60);
+    setCanSendNewOtp(false);
+    try {
+      await client.post('/auth/re-verify-email', {userId: userInfo.id});
+    } catch (e) {
+      console.log('There was an error while requesting for OTP', e);
+    }
+  };
+
   return (
-    <Form
-      initialValues={initialValues}
-      onSubmit={values => console.log(values)}
-      validationSchema={lostPassword}>
-      <AuthFormContainer
-        title="Forget Password!"
-        subtitle="Forgot your password? Don't worry we got you back!">
+    <Form onSubmit={handleSubmit}>
+      <AuthFormContainer title="Please look at your email.">
         <View style={styles.inputContainer}>
           {otpFields.map((_, idx) => {
             return (
@@ -86,9 +136,22 @@ const Verification: FC<Props> = props => {
             );
           })}
         </View>
-        <SubmitBtn title="Submit" />
+        <SubmitBtn
+          title="Submit"
+          // onPress={handleSubmit}
+
+          busy={submitting}
+        />
         <View style={styles.linkContainer}>
-          <AppLink title="Resend OTP" />
+          {countDown > 0 && (
+            <Text style={styles.countDown}>{countDown} secs</Text>
+          )}
+          <AppLink
+            active={canSendNewOtp}
+            title="Resend OTP"
+            // onPress={() => setCanSendNewOtp(false)}
+            onPress={requestForOTP}
+          />
         </View>
       </AuthFormContainer>
     </Form>
@@ -105,9 +168,13 @@ const styles = StyleSheet.create({
   },
   linkContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     marginTop: 20,
     marginHorizontal: 20,
+  },
+  countDown: {
+    color: colors.SECONDARY,
+    marginRight: 8,
   },
 });
 

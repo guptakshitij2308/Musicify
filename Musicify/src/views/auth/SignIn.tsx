@@ -5,20 +5,17 @@ import SubmitBtn from '@components/form/SubmitBtn';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import AppLink from '@ui/AppLink';
 import PasswordVisibilityIcon from '@ui/PasswordVisibilityIcon';
+import {FormikHelpers} from 'formik';
 
 import {FC, useState} from 'react';
 import {View, StyleSheet} from 'react-native';
 import {AuthStackParamsList} from 'src/@types/navigation';
+import client from 'src/api/client';
 import * as yup from 'yup';
 
 interface Props {}
 
 const signInSchema = yup.object().shape({
-  name: yup
-    .string()
-    .trim('Name is missing!')
-    .min(3, 'Name is too short!')
-    .required('Name is missing!'),
   email: yup
     .string()
     .trim('Email is missing!')
@@ -31,15 +28,45 @@ const signInSchema = yup.object().shape({
     .required('Password is required'),
 });
 
+interface SignInUserInfo {
+  email: string;
+  password: string;
+}
+
 const SignIn: FC<Props> = props => {
   const initialValues = {email: '', password: ''};
   // const [userInfo, setUserInfo] = useState(initialValues);
   const [secureEntry, setSecureEntry] = useState(true);
   const navigation = useNavigation<NavigationProp<AuthStackParamsList>>();
+
+  const handleSubmit = async (
+    values: SignInUserInfo,
+    actions: FormikHelpers<SignInUserInfo>,
+  ) => {
+    // console.log('Hello!');
+    actions.setSubmitting(true);
+    try {
+      const res = await client.post('/auth/sign-in', {
+        ...values,
+      });
+      // console.log(res);
+      const data = res.data;
+      console.log(data);
+      // navigation.navigate('Verification', {userInfo: data.user});
+    } catch (e) {
+      console.log('Sign up error', e);
+    }
+    actions.setSubmitting(false);
+  };
+
   return (
     <Form
       initialValues={initialValues}
-      onSubmit={values => console.log(values)}
+      // onSubmit={handleSubmit}
+      onSubmit={(values, actions) => {
+        console.log('Form submitted with values:', values);
+        handleSubmit(values, actions);
+      }}
       validationSchema={signInSchema}>
       <AuthFormContainer
         title="Welcome Back!"

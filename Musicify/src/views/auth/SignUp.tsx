@@ -5,7 +5,6 @@ import SubmitBtn from '@components/form/SubmitBtn';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import AppLink from '@ui/AppLink';
 import PasswordVisibilityIcon from '@ui/PasswordVisibilityIcon';
-import axios from 'axios';
 import {FormikHelpers} from 'formik';
 import {FC, useState} from 'react';
 import {StyleSheet, View} from 'react-native';
@@ -15,10 +14,10 @@ import * as yup from 'yup';
 
 interface Props {}
 
-interface NewUser {
-  name: '';
-  email: '';
-  password: '';
+export interface NewUser {
+  name: string;
+  email: string;
+  password: string;
 }
 
 const signUpSchema = yup.object().shape({
@@ -46,30 +45,33 @@ const signUpSchema = yup.object().shape({
     .required('Password is required'),
 });
 
-const handleSubmit = async (
-  values: NewUser,
-  actions: FormikHelpers<NewUser>,
-) => {
-  try {
-    // const res = await axios.post('http://192.168.69.23:8000/auth/create', {
-    //   ...values,
-    // });
-    const res = await client.post('/auth/create', {
-      ...values,
-    });
-    const data = res.data;
-    // console.log(res);
-    console.log(data);
-  } catch (e) {
-    console.log('Sign up error', e);
-  }
-};
-
 const SignUp: FC<Props> = props => {
   const initialValues = {name: '', email: '', password: ''};
   // const [userInfo, setUserInfo] = useState(initialValues);
   const [secureEntry, setSecureEntry] = useState(true);
   const navigation = useNavigation<NavigationProp<AuthStackParamsList>>();
+
+  const handleSubmit = async (
+    values: NewUser,
+    actions: FormikHelpers<NewUser>,
+  ) => {
+    actions.setSubmitting(true);
+    try {
+      // const res = await axios.post('http://192.168.69.23:8000/auth/create', {
+      //   ...values,
+      // });
+      const res = await client.post('/auth/create', {
+        ...values,
+      });
+      const data = res.data;
+      // console.log(res);
+      // console.log(data);
+      navigation.navigate('Verification', {userInfo: data.user});
+    } catch (e) {
+      console.log('Sign up error', e);
+    }
+    actions.setSubmitting(false);
+  };
 
   return (
     <Form
