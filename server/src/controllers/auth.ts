@@ -29,6 +29,8 @@ export const create: RequestHandler = async (req: CreateUser, res) => {
     token,
   });
 
+  // console.log("Saved bro.");m
+
   sendMail(token, { name, email, userId: user._id.toString() });
   res.status(201).send({ user: { id: user._id, name, email } });
 };
