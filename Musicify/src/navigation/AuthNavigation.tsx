@@ -8,6 +8,8 @@ import {AuthStackParamsList} from 'src/@types/navigation';
 const Stack = createNativeStackNavigator<AuthStackParamsList>();
 
 const AuthNavigator = () => {
+  // const authState = useSelector(getAuthState);
+  // console.log(authState);
   return (
     <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name="SignIn" component={SignIn} />

@@ -1,17 +1,21 @@
-import {NavigationContainer} from '@react-navigation/native';
 import {FC} from 'react';
 import {SafeAreaView, StyleSheet} from 'react-native';
-import AuthNavigator from 'src/navigation/AuthNavigation';
+import {Provider} from 'react-redux';
+import AppNavigator from 'src/navigation';
+import store from './src/store/index';
 
 interface Props {}
 
 const App: FC<Props> = props => {
   return (
-    <SafeAreaView style={styles.container}>
-      <NavigationContainer>
-        <AuthNavigator />
-      </NavigationContainer>
-    </SafeAreaView>
+    <Provider store={store}>
+      <SafeAreaView style={styles.container}>
+        {/* <NavigationContainer>
+          <AuthNavigator />
+        </NavigationContainer> */}
+        <AppNavigator />
+      </SafeAreaView>
+    </Provider>
   );
 };
 
