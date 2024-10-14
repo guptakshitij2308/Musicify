@@ -6,7 +6,7 @@ interface Props {}
 const Upload: FC<Props> = props => {
   return (
     <View style={styles.container}>
-      <Text>Upload bro</Text>
+      <Text style={{fontSize: 20, color: 'white'}}>Upload bro</Text>
     </View>
   );
 };

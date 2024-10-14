@@ -5,6 +5,7 @@ import SubmitBtn from '@components/form/SubmitBtn';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import AppLink from '@ui/AppLink';
 import PasswordVisibilityIcon from '@ui/PasswordVisibilityIcon';
+import {Keys, saveToAsyncStorage} from '@utils/asyncStorage';
 import {FormikHelpers} from 'formik';
 
 import {FC, useState} from 'react';
@@ -54,6 +55,7 @@ const SignIn: FC<Props> = props => {
       });
       // console.log(res);
       const data = res.data;
+      await saveToAsyncStorage(Keys.AUTH_TOKEN, data.token);
       dispatch(updateLoggedInState(true));
       dispatch(updateProfile(data.profile));
       // console.log(data);
