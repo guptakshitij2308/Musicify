@@ -1,9 +1,11 @@
 import CategorySelector from '@components/CategorySelector';
 import FileSelector from '@components/FileSelector';
 import AppButton from '@ui/AppButton';
+import Progress from '@ui/Progress';
 import {getFromAsyncStorage, Keys} from '@utils/asyncStorage';
 import {categories} from '@utils/categories';
 import colors from '@utils/colors';
+import {mapRange} from '@utils/math';
 import {FC, useState} from 'react';
 import {
   Pressable,
@@ -32,6 +34,8 @@ const defaultForm: FormFields = {
   title: '',
   about: '',
   category: '',
+  poster: undefined,
+  file: undefined,
 };
 
 const audioInfoSchema = yup.object().shape({
@@ -57,8 +61,11 @@ const Upload: FC<Props> = props => {
   const [audioInfo, setAudioInfo] = useState({
     ...defaultForm,
   });
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [busy, setBusy] = useState(false);
 
   async function handleUpload() {
+    setBusy(true);
     try {
       const finalData = await audioInfoSchema.validate(audioInfo);
       // console.log(finalData);
@@ -81,12 +88,27 @@ const Upload: FC<Props> = props => {
       }
 
       const token = await getFromAsyncStorage(Keys.AUTH_TOKEN);
-      console.log(token);
+      // console.log(token);
 
       const {data} = await client.post('/audio/create', formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress(progressEvent) {
+          const uploaded = mapRange({
+            inputMin: 0,
+            inputMax: progressEvent.total || 0,
+            outputMin: 0,
+            outputMax: 100,
+            inputValue: progressEvent.loaded || 0,
+          });
+
+          if (uploaded >= 100) {
+            setAudioInfo({...defaultForm});
+            setBusy(false);
+          }
+          setUploadProgress(Math.floor(uploaded));
         },
       }); // as in backend we want this as multipart form data, we use FormData for it
       console.log(data);
@@ -97,6 +119,7 @@ const Upload: FC<Props> = props => {
         console.log(e.response.data);
       }
     }
+    setBusy(false);
   }
 
   return (
@@ -136,6 +159,7 @@ const Upload: FC<Props> = props => {
           onChange={e =>
             setAudioInfo({...audioInfo, title: e.nativeEvent.text})
           }
+          value={audioInfo.title}
         />
 
         <Pressable
@@ -154,9 +178,17 @@ const Upload: FC<Props> = props => {
           onChange={e =>
             setAudioInfo({...audioInfo, about: e.nativeEvent.text})
           }
+          value={audioInfo.about}
         />
-        <View style={{marginBottom: 20}} />
-        <AppButton borderRadius={7} title="Submit" onPress={handleUpload} />
+        {busy ? <Progress progress={uploadProgress} /> : null}
+        <View style={{marginVertical: 20}} />
+
+        <AppButton
+          busy={busy}
+          borderRadius={7}
+          title="Submit"
+          onPress={handleUpload}
+        />
         <CategorySelector
           visible={showCategoryModal}
           title="Category"
