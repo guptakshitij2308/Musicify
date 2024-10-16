@@ -8,11 +8,19 @@ interface Props {
   //   onPress?: void;
   busy?: boolean;
   onPress?: (e: React.FormEvent<HTMLFormElement>) => void;
+  borderRadius?: number;
 }
 
 const AppButton: FC<Props> = props => {
   return (
-    <Pressable onPress={props.onPress} style={styles.container}>
+    <Pressable
+      onPress={props.onPress}
+      style={[
+        styles.container,
+        {
+          borderRadius: props.borderRadius || 25,
+        },
+      ]}>
       {!props.busy ? <Text>{props.title}</Text> : <Loader />}
     </Pressable>
   );
@@ -25,7 +33,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.SECONDARY,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 25,
   },
   title: {
     color: colors.CONTRAST,

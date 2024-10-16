@@ -1,8 +1,8 @@
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import colors from '@utils/colors';
-import Home from '@views/auth/Home';
-import Profile from '@views/auth/Profile';
-import Upload from '@views/auth/Upload';
+import Home from '@views/Home';
+import Profile from '@views/Profile';
+import Upload from '@views/Upload';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialComIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 
