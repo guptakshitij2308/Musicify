@@ -15,6 +15,8 @@ import {AuthStackParamsList} from 'src/@types/navigation';
 import client from 'src/api/client';
 import {updateLoggedInState, updateProfile} from 'src/store/auth';
 import * as yup from 'yup';
+import catchAsyncError from '../../api/catchError';
+import {updateNotification} from 'src/store/notification';
 
 interface Props {}
 
@@ -61,7 +63,9 @@ const SignIn: FC<Props> = props => {
       // console.log(data);
       // navigation.navigate('Verification', {userInfo: data.user});
     } catch (e) {
-      console.log('Sign up error', e);
+      const err = catchAsyncError(e);
+      dispatch(updateNotification({message: err, type: 'error'}));
+      console.log('Sign in error', e);
     }
     actions.setSubmitting(false);
   };

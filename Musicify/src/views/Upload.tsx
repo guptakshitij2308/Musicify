@@ -17,7 +17,10 @@ import {
 } from 'react-native';
 import {DocumentPickerResponse, types} from 'react-native-document-picker';
 import MaterialComIcon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {useDispatch} from 'react-redux';
+import catchAsyncError from 'src/api/catchError';
 import client from 'src/api/client';
+import {updateNotification} from 'src/store/notification';
 import * as yup from 'yup';
 
 interface Props {}
@@ -63,6 +66,7 @@ const Upload: FC<Props> = props => {
   });
   const [uploadProgress, setUploadProgress] = useState(0);
   const [busy, setBusy] = useState(false);
+  const dispatch = useDispatch();
 
   async function handleUpload() {
     setBusy(true);
@@ -113,11 +117,8 @@ const Upload: FC<Props> = props => {
       }); // as in backend we want this as multipart form data, we use FormData for it
       console.log(data);
     } catch (e) {
-      if (e instanceof yup.ValidationError) {
-        console.log('Validation Error : ', e);
-      } else {
-        console.log(e.response.data);
-      }
+      const err = catchAsyncError(e);
+      dispatch(updateNotification({message: err, type: 'error'}));
     }
     setBusy(false);
   }

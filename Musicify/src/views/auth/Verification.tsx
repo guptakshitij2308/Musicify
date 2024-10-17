@@ -8,8 +8,11 @@ import OTPField from '@ui/OTPField';
 import colors from '@utils/colors';
 import {FC, useEffect, useRef, useState} from 'react';
 import {Keyboard, StyleSheet, Text, TextInput, View} from 'react-native';
+import {useDispatch} from 'react-redux';
 import {AuthStackParamsList} from 'src/@types/navigation';
+import catchAsyncError from 'src/api/catchError';
 import client from 'src/api/client';
+import {updateNotification} from 'src/store/notification';
 
 type Props = NativeStackScreenProps<AuthStackParamsList, 'Verification'>;
 
@@ -22,6 +25,7 @@ const Verification: FC<Props> = props => {
   const [submitting, setSubmitting] = useState(false);
   const [countDown, setCountDown] = useState(60);
   const [canSendNewOtp, setCanSendNewOtp] = useState(false);
+  const dispatch = useDispatch();
 
   // console.log(props.route.params.userInfo, 'Hello!');
   const {userInfo} = props.route.params;
@@ -86,7 +90,9 @@ const Verification: FC<Props> = props => {
   const handleSubmit = async () => {
     // console.log('Hello');
     if (!isValidOtp) {
-      return;
+      return dispatch(
+        updateNotification({message: 'Invalid OTP', type: 'error'}),
+      );
     }
     setSubmitting(true);
     try {
@@ -97,8 +103,11 @@ const Verification: FC<Props> = props => {
       // console.log(res);
       const {data} = res;
       console.log(data);
+      dispatch(updateNotification({message: data.message, type: 'success'}));
       navigation.navigate('SignIn');
     } catch (e) {
+      const err = catchAsyncError(e);
+      dispatch(updateNotification({message: err, type: 'error'}));
       console.log('Error in verifying the token', e);
     }
     setSubmitting(false);
