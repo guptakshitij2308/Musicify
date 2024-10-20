@@ -5,13 +5,18 @@ import SubmitBtn from '@components/form/SubmitBtn';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import AppLink from '@ui/AppLink';
 import PasswordVisibilityIcon from '@ui/PasswordVisibilityIcon';
+import {Keys, saveToAsyncStorage} from '@utils/asyncStorage';
 import {FormikHelpers} from 'formik';
 
 import {FC, useState} from 'react';
 import {View, StyleSheet} from 'react-native';
+import {useDispatch} from 'react-redux';
 import {AuthStackParamsList} from 'src/@types/navigation';
 import client from 'src/api/client';
+import {updateLoggedInState, updateProfile} from 'src/store/auth';
 import * as yup from 'yup';
+import catchAsyncError from '../../api/catchError';
+import {updateNotification} from 'src/store/notification';
 
 interface Props {}
 
@@ -38,6 +43,7 @@ const SignIn: FC<Props> = props => {
   // const [userInfo, setUserInfo] = useState(initialValues);
   const [secureEntry, setSecureEntry] = useState(true);
   const navigation = useNavigation<NavigationProp<AuthStackParamsList>>();
+  const dispatch = useDispatch();
 
   const handleSubmit = async (
     values: SignInUserInfo,
@@ -51,10 +57,15 @@ const SignIn: FC<Props> = props => {
       });
       // console.log(res);
       const data = res.data;
-      console.log(data);
+      await saveToAsyncStorage(Keys.AUTH_TOKEN, data.token);
+      dispatch(updateLoggedInState(true));
+      dispatch(updateProfile(data.profile));
+      // console.log(data);
       // navigation.navigate('Verification', {userInfo: data.user});
     } catch (e) {
-      console.log('Sign up error', e);
+      const err = catchAsyncError(e);
+      dispatch(updateNotification({message: err, type: 'error'}));
+      console.log('Sign in error', e);
     }
     actions.setSubmitting(false);
   };
@@ -64,7 +75,7 @@ const SignIn: FC<Props> = props => {
       initialValues={initialValues}
       // onSubmit={handleSubmit}
       onSubmit={(values, actions) => {
-        console.log('Form submitted with values:', values);
+        // console.log('Form submitted with values:', values);
         handleSubmit(values, actions);
       }}
       validationSchema={signInSchema}>

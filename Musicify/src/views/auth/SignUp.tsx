@@ -8,8 +8,11 @@ import PasswordVisibilityIcon from '@ui/PasswordVisibilityIcon';
 import {FormikHelpers} from 'formik';
 import {FC, useState} from 'react';
 import {StyleSheet, View} from 'react-native';
+import {useDispatch} from 'react-redux';
 import {AuthStackParamsList} from 'src/@types/navigation';
+import catchAsyncError from 'src/api/catchError';
 import client from 'src/api/client';
+import {updateNotification} from 'src/store/notification';
 import * as yup from 'yup';
 
 interface Props {}
@@ -50,6 +53,7 @@ const SignUp: FC<Props> = props => {
   // const [userInfo, setUserInfo] = useState(initialValues);
   const [secureEntry, setSecureEntry] = useState(true);
   const navigation = useNavigation<NavigationProp<AuthStackParamsList>>();
+  const dispatch = useDispatch();
 
   const handleSubmit = async (
     values: NewUser,
@@ -68,6 +72,8 @@ const SignUp: FC<Props> = props => {
       // console.log(data);
       navigation.navigate('Verification', {userInfo: data.user});
     } catch (e) {
+      const err = catchAsyncError(e);
+      dispatch(updateNotification({message: err, type: 'error'}));
       console.log('Sign up error', e);
     }
     actions.setSubmitting(false);
