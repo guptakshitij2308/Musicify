@@ -1,5 +1,4 @@
 import {FC, useEffect} from 'react';
-import {StyleSheet} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -27,13 +26,7 @@ const PulseAnimationContainer: FC<Props> = props => {
     );
   }, [opacitySharedValue]);
 
-  return (
-    <Animated.View style={styles.container}>{props.children}</Animated.View>
-  );
+  return <Animated.View style={opacity}>{props.children}</Animated.View>;
 };
-
-const styles = StyleSheet.create({
-  container: {},
-});
 
 export default PulseAnimationContainer;
