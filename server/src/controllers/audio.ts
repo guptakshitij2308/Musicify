@@ -140,6 +140,9 @@ export const getLatestUploads: RequestHandler = async (req, res) => {
     };
   });
 
+  // await new Promise((resolve) => {
+  //   setTimeout(resolve, 2000);
+  // });
   res.json({ audios });
 };
 

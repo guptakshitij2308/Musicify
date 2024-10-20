@@ -1,0 +1,111 @@
+In TypeScript, both type and interface are used to define the shape of an object or a data structure, but they have some key differences in terms of usage, capabilities, and flexibility. Here's a breakdown of the differences between type and interface:
+
+1. Defining Object Shapes:
+Both type and interface can be used to describe objects, but they have slightly different syntax:
+
+typescript
+Copy code
+// Using interface
+interface User {
+  name: string;
+  age: number;
+}
+
+// Using type
+type User = {
+  name: string;
+  age: number;
+};
+2. Extending and Combining:
+Interface:
+
+Interfaces are primarily used for extending (inheritance). You can use the extends keyword to inherit from other interfaces.
+
+typescript
+Copy code
+interface Person {
+  name: string;
+}
+
+interface Employee extends Person {
+  employeeId: number;
+}
+Type:
+
+Types can be combined using union (|) and intersection (&) types, allowing more flexibility in composing types.
+
+typescript
+Copy code
+type Person = {
+  name: string;
+};
+
+type Employee = Person & {
+  employeeId: number;
+};
+3. Merging Declarations (Declaration Merging):
+Interface:
+
+One of the unique features of interface is declaration merging. You can define the same interface multiple times, and TypeScript will merge them into a single interface.
+
+typescript
+Copy code
+interface User {
+  name: string;
+}
+
+interface User {
+  age: number;
+}
+
+// Now User has both 'name' and 'age' properties
+const user: User = {
+  name: 'Alice',
+  age: 25,
+};
+Type:
+
+Type declarations cannot be merged. If you try to declare the same type multiple times, TypeScript will throw an error.
+4. Complex Types (Union & Intersection Types):
+Type:
+
+type is more powerful when it comes to working with complex types, like unions and intersections. You can define types that can be a combination of different types or just one of them.
+
+typescript
+Copy code
+type Status = 'success' | 'error' | 'loading';  // Union type
+type ApiResponse<T> = T & { status: Status };   // Intersection type
+Interface:
+
+interface cannot express union types directly.
+5. Function and Tuple Types:
+Type:
+
+type can be used to define function signatures, tuples, and other non-object types.
+
+typescript
+Copy code
+type Point = [number, number]; // Tuple
+type LogFunction = (message: string) => void; // Function signature
+Interface:
+
+While interface can describe callable or constructable types, it isn't as commonly used for defining functions or tuples.
+
+typescript
+Copy code
+interface LogFunction {
+  (message: string): void;
+}
+6. Use Cases:
+Use interface when you are primarily defining the shape of an object and you expect that this structure may be extended or merged in the future.
+Use type when you need more flexibility, such as combining types with union or intersection types, or defining aliases for primitive types, tuples, or function signatures.
+Summary of Differences:
+Feature	interface	type
+Object Shapes	Yes	Yes
+Extending / Inheritance	extends (single or multiple interfaces)	Intersection (&) for composition
+Declaration Merging	Yes	No
+Union Types	No	Yes (`
+Intersection Types	No	Yes (&)
+Function & Tuple Types	Less commonly used	Commonly used
+Use for Primitives	No	Yes (type StringAlias = string)
+In general, interface is more suited for defining object structures and is more extendable, whereas type is more versatile and better suited for complex types. However, in many cases, they can be used interchangeably depending on your needs.
