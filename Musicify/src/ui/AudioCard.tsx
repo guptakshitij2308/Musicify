@@ -6,14 +6,16 @@ import {Text} from 'react-native-paper';
 interface Props {
   title: string;
   poster?: string;
+  onPress?(): void;
+  onLongPress?(): void;
 }
 
-const AudioCard: FC<Props> = ({title, poster}) => {
+const AudioCard: FC<Props> = ({title, poster, onPress, onLongPress}) => {
   const source = poster ? {uri: poster} : require('../assets/music.png');
   return (
     <Pressable
-      onPress={() => console.log('Pressed bro')}
-      onLongPress={() => console.log('Long pressed bro')}
+      onPress={onPress}
+      onLongPress={onLongPress}
       style={styles.container}>
       <Image source={source} style={styles.poster} />
       <Text numberOfLines={2} ellipsizeMode="tail" style={styles.title}>
