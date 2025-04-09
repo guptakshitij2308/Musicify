@@ -1,5 +1,5 @@
 import BasicModalContainer from '@ui/BasicModalContainer';
-import {StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 
 interface Props<T> {
   onRequestClose: () => void;

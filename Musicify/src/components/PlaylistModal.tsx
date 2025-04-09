@@ -11,23 +11,32 @@ interface Props {
   visible: boolean;
   onRequestClose: () => void;
   list: Playlist[];
+  onCreateNewPress?: () => void;
+  onPlaylistPress: (value: Playlist) => void;
 }
 
 interface ListItemProps {
   title: string;
   icon: React.ReactNode;
+  onPress?: () => void;
 }
 
-const ListItem: FC<ListItemProps> = ({title, icon}) => {
+const ListItem: FC<ListItemProps> = ({title, icon, onPress}) => {
   return (
-    <Pressable style={styles.listItemContainer}>
+    <Pressable style={styles.listItemContainer} onPress={onPress}>
       {icon}
       <Text style={styles.listItemTitle}>{title}</Text>
     </Pressable>
   );
 };
 
-const PlaylistModal: FC<Props> = ({visible, onRequestClose, list}) => {
+const PlaylistModal: FC<Props> = ({
+  visible,
+  onRequestClose,
+  list,
+  onCreateNewPress,
+  onPlaylistPress,
+}) => {
   return (
     <BasicModalContainer visible={visible} onRequestClose={onRequestClose}>
       {/* we want to render new playlists */}
@@ -35,6 +44,7 @@ const PlaylistModal: FC<Props> = ({visible, onRequestClose, list}) => {
         {list.map((item, index) => {
           return (
             <ListItem
+              onPress={() => onPlaylistPress(item)}
               key={index}
               title={item.title}
               icon={
@@ -52,6 +62,7 @@ const PlaylistModal: FC<Props> = ({visible, onRequestClose, list}) => {
       <ListItem
         title={'Create new'}
         icon={<AntDesignIcon size={20} name="plus" color={colors.SECONDARY} />}
+        onPress={onCreateNewPress}
       />
     </BasicModalContainer>
   );

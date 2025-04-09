@@ -26,7 +26,7 @@ const AppNotification: FC<Props> = props => {
     textColor = colors.CONTRAST;
   if (type === 'success') {
     backgroundColor = colors.SUCCESS;
-    textColor = colors.CONTRAST;
+    textColor = '#fff';
   }
 
   useEffect(() => {

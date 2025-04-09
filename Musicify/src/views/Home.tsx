@@ -1,17 +1,17 @@
 import LatestUploads from '@components/LatestUploads';
 import OptionsModal from '@components/OptionsModal';
-import PlaylistForm from '@components/PlaylistForm';
+import PlaylistForm, {PlaylistInfo} from '@components/PlaylistForm';
 import PlaylistModal from '@components/PlaylistModal';
 import RecommendedAudios from '@components/RecommendedAudios';
-import {getFromAsyncStorage, Keys} from '@utils/asyncStorage';
 import colors from '@utils/colors';
 import {FC, useState} from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
 import MaterialComIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useDispatch} from 'react-redux';
-import {AudioData} from 'src/@types/audio';
+import {AudioData, Playlist} from 'src/@types/audio';
 import catchAsyncError from 'src/api/catchError';
-import client from 'src/api/client';
+import {getClient} from 'src/api/client';
+import {useFetchPlaylists} from 'src/hooks/query';
 import {updateNotification} from 'src/store/notification';
 
 interface Props {}
@@ -20,6 +20,10 @@ const Home: FC<Props> = props => {
   const [showOptions, setShowOptions] = useState(false);
   const [selectedAudio, setSelectedAudio] = useState<AudioData>();
   const dispatch = useDispatch();
+  const [showPlaylistsModal, setShowPlaylistsModal] = useState(false);
+  const [showPlaylistsForm, setShowPlaylistsForm] = useState(false);
+  const {data} = useFetchPlaylists();
+  // console.log(data);
 
   function handleOnLongPress(audio: AudioData) {
     setSelectedAudio(audio);
@@ -33,13 +37,12 @@ const Home: FC<Props> = props => {
 
     // console.log('Here');
     try {
-      const token = await getFromAsyncStorage(Keys.AUTH_TOKEN);
+      const client = await getClient();
       const {data} = await client.post(
         '/favourite?audioId=' + selectedAudio.id,
         null,
-        {headers: {Authorization: `Bearer ${token}`}},
       );
-      // console.log(data);
+      console.log(data);
     } catch (e) {
       // console.error(e);
       const err = catchAsyncError(e);
@@ -49,17 +52,65 @@ const Home: FC<Props> = props => {
     setShowOptions(false);
   }
 
+  const handleAddToPlaylist = () => {
+    setShowOptions(false);
+    setShowPlaylistsModal(true);
+  };
+
+  const handleSubmitPlaylistForm = async (value: PlaylistInfo) => {
+    if (!value.title.trim()) {
+      return;
+    }
+    try {
+      const client = await getClient();
+      const {data} = await client.post('/playlist/create', {
+        resID: selectedAudio?.id,
+        title: value.title,
+        visibility: value.private ? 'private' : 'public',
+      });
+      // console.log(data);
+    } catch (e) {
+      const err = catchAsyncError(e);
+      dispatch(updateNotification({message: err, type: 'error'}));
+    }
+  };
+
+  const updatePlaylist = async (item: Playlist) => {
+    try {
+      const client = await getClient();
+      const {data} = await client.patch('/playlist', {
+        id: item.id,
+        item: selectedAudio?.id,
+        title: item.title,
+        visibility: item.visibility,
+      });
+      setSelectedAudio(undefined);
+      setShowPlaylistsModal(false);
+      dispatch(
+        updateNotification({
+          message: 'New audio added to playlist',
+          type: 'success',
+        }),
+      );
+      console.log(data);
+    } catch (e) {
+      const err = catchAsyncError(e);
+      dispatch(updateNotification({message: err, type: 'error'}));
+    }
+  };
+
   return (
     <View style={styles.container}>
       <LatestUploads
         onAudioPress={item => {
           setSelectedAudio(item);
+          console.log(item);
         }}
         onAudioLongPress={handleOnLongPress}
       />
       <RecommendedAudios
-        onAudioPress={() => {
-          console.log('item');
+        onAudioPress={item => {
+          console.log(item);
         }}
         onAudioLongPress={handleOnLongPress}
       />
@@ -70,7 +121,7 @@ const Home: FC<Props> = props => {
           {
             title: 'Add to playlist',
             icon: 'playlist-music',
-            // onPress: handleOnFavPress,
+            onPress: handleAddToPlaylist,
           },
           {
             title: 'Add to faviourites',
@@ -89,14 +140,23 @@ const Home: FC<Props> = props => {
           </Pressable>
         )}
       />
-      {/* <PlaylistModal
-        visible
-        list={[
-          {title: 'My Playlists', visibility: 'public'},
-          {title: 'My ', visibility: 'private'},
-        ]}
-      /> */}
-      <PlaylistForm status="private" />
+      <PlaylistModal
+        visible={showPlaylistsModal}
+        onRequestClose={() => setShowPlaylistsModal(false)}
+        list={data || []}
+        onCreateNewPress={() => {
+          setShowPlaylistsForm(true);
+          setShowPlaylistsModal(false);
+        }}
+        onPlaylistPress={updatePlaylist}
+      />
+      {showPlaylistsForm ? (
+        <PlaylistForm
+          visible={showPlaylistsForm}
+          onRequestClose={() => setShowPlaylistsForm(false)}
+          onSubmit={handleSubmitPlaylistForm}
+        />
+      ) : null}
     </View>
   );
 };
