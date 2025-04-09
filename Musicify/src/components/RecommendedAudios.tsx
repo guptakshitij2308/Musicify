@@ -3,12 +3,16 @@ import PulseAnimationContainer from '@ui/PulseAnimationContainer';
 import colors from '@utils/colors';
 import {FC} from 'react';
 import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
+import {AudioData} from 'src/@types/audio';
 import {useFetchRecommendedtAudios} from 'src/hooks/query';
 
-interface Props {}
+interface Props {
+  onAudioPress(audio: AudioData, data: AudioData[]): void;
+  onAudioLongPress(audio: AudioData, data: AudioData[]): void;
+}
 
-const RecommendedAudios: FC<Props> = props => {
-  const {data, isFetching} = useFetchRecommendedtAudios();
+const RecommendedAudios: FC<Props> = ({onAudioLongPress, onAudioPress}) => {
+  const {data = [], isFetching} = useFetchRecommendedtAudios();
 
   if (isFetching) {
     return (
@@ -18,7 +22,7 @@ const RecommendedAudios: FC<Props> = props => {
           <GridView
             col={3}
             data={new Array(6).fill('')}
-            renderItem={item => {
+            renderItem={_item => {
               return <View style={styles.dummyAudioView} />;
             }}
           />
@@ -33,13 +37,15 @@ const RecommendedAudios: FC<Props> = props => {
   //   console.log(data);
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Latest Uploads</Text>
+      <Text style={styles.title}>Recommended Audios</Text>
       <GridView
         col={3}
         data={data || []}
         renderItem={item => {
           return (
-            <Pressable>
+            <Pressable
+              onPress={() => onAudioPress(item, data)}
+              onLongPress={() => onAudioLongPress(item, data)}>
               <Image source={getPoster(item.poster)} style={styles.poster} />
               <Text
                 numberOfLines={2}
